@@ -95,7 +95,7 @@ void LedMatrix::Init (v8::Local<v8::Object> exports)
 	Nan::SetPrototypeMethod(tpl, "drawText", DrawText);
 	Nan::SetPrototypeMethod(tpl, "drawCircle", DrawCircle);
 	Nan::SetPrototypeMethod(tpl, "drawLine", DrawLine);
-	Nan::SetPrototypeMethod(tpl, "brightness", Brightness);
+	Nan::SetPrototypeMethod(tpl, "setBrightness", SetBrightness);
 	
 	constructor.Reset(tpl->GetFunction());
 
@@ -365,20 +365,20 @@ void LedMatrix :: DrawLine   (const Nan::FunctionCallbackInfo<Value>& args)
 
 	return matrix->DrawLine( x0, y0, x1, y1, std::make_tuple(r, g, b));
 }
-void LedMatrix :: Brightness (int b)
+void LedMatrix :: SetBrightness (int b)
 {
 
 	matrix->SetBrightness(b);
 }
 
-void LedMatrix :: Brightness (const Nan::FunctionCallbackInfo<Value>& args)
+void LedMatrix :: SetBrightness (const Nan::FunctionCallbackInfo<Value>& args)
 {
 	LedMatrix* matrix = ObjectWrap::Unwrap<LedMatrix>(args.Holder()); 
 	int b = 100; 
 
 	b = args[0]->ToInteger()->Value();
 
-	return matrix->Brightness(b);
+	return matrix->SetBrightness(b);
 }
 
 
