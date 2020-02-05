@@ -28,39 +28,27 @@ using rgb_matrix::GPIO;
 Nan::Persistent<Function> LedMatrix::constructor;
 std::map<std::string, rgb_matrix::Font> LedMatrix::fontMap;
 
-LedMatrix::LedMatrix (int rows, int cols, int chained_displays, int parallel_displays, int brightness, const char* mapping, const char* rgbseq, std::vector<std::string> flags) 
+LedMatrix::LedMatrix (int rows, int cols, std::vector<std::string> flags) 
 {
 	//dump out flags into a vector of char* <CRRINNGGEEEEEE>
-	std::vector<char*> c_strs;
-	c_strs.push_back("bin");
-	for(auto &f : flags) //FIXED THIS BEING VALUE LOOP INSTEAD OF REFERENCE LOOP AAAAAAAAAAAAAHHHHHHHHHHHHHHHHHHHHHHHH
-	{
-		c_strs.push_back(&f[0]); //every known version of std::string uses continuos memory so this is safe~ 
-		std::cout << &f[0] << std::endl;
+	std::vector<char*> flagsVector;
+	std::string bin = "bin";
+	// Every known version of std::string uses continuos memory so this is safe:
+	flagsVector.push_back(&bin[0]);
+	for(auto &flag : flags) {
+		flagsVector.push_back(&flag[0]);
 	}
 
-	int num = c_strs.size();
-	char** d = c_strs.data();
-
-	RGBMatrix::Options defaults; 
+	RGBMatrix::Options options; 
 	rgb_matrix::RuntimeOptions runtime;
-
-
-	defaults.rows = rows;
-	defaults.cols = cols; 
-	defaults.chain_length = chained_displays;
-	defaults.parallel = parallel_displays; 
-	defaults.brightness = brightness;
-	defaults.hardware_mapping = mapping;
-	defaults.led_rgb_sequence = rgbseq;
-
-	std::cout << rgb_matrix::ParseOptionsFromFlags(&num, &d, &defaults, &runtime, true) << std::endl;
-	//temp debug output
-	//parse extra settings flags for POWER_USERS (TM)
+	options.rows = rows;
+	options.cols = cols;
+	int flagsSize = flagsVector.size();
+	char** flagsData = flagsVector.data();
+	rgb_matrix::ParseOptionsFromFlags(&flagsSize, &flagsData, &options, &runtime, true);
 
 	assert(io.Init());
-	//matrix = CreateMatrixFromOptions(defaults, runtime);
-	matrix = new RGBMatrix(&io, defaults);	
+	matrix = new RGBMatrix(&io, options);	
 	matrix->set_luminance_correct(true);
 
 	canvas = matrix->CreateFrameCanvas();
@@ -398,11 +386,6 @@ void LedMatrix::New(const Nan::FunctionCallbackInfo<Value>& args)
 	// grab parameters
 	int rows = 32;
 	int cols = 32;
-	int chained = 1;
-	int parallel = 1;
-	int brightness = 100;
-	std::string mapping = "regular";
-	std::string rgbSeq = "RGB";
 
 	Local<Context> context = Nan::GetCurrentContext();
 
@@ -413,40 +396,19 @@ void LedMatrix::New(const Nan::FunctionCallbackInfo<Value>& args)
 		cols = Nan::To<int>(args[1]).FromJust();
 	}
 
-	if(args.Length() > 2 && args[2]->IsNumber()) {
-		chained = Nan::To<int>(args[2]).FromJust();
-	}
-	if(args.Length() > 3 && args[3]->IsNumber()) {
-		parallel = Nan::To<int>(args[3]).FromJust();
-	}
+	std::vector<std::string> flags; 
 
-	if(args.Length() > 4 && args[4]->IsNumber())  {
-		brightness = Nan::To<int>(args[4]).FromJust();
-	}
-
-	if(args.Length() > 5 && args[5]->IsString()) {
-		Nan::Utf8String str(args[5]->ToString(context).ToLocalChecked());
-		mapping = std::string(*str);
-	}
-
-	if(args.Length() > 6 && args[6]->IsString()) {
-		Nan::Utf8String str(args[6]->ToString(context).ToLocalChecked());
-		rgbSeq = std::string(*str);
-	}
-
-	std::vector<std::string> strings; 
-
-	if(args.Length() > 7 && args[7]->IsArray()) {
-		Local<Array> array = Local<Array>::Cast(args[7]);
+	if(args.Length() > 2 && args[2]->IsArray()) {
+		Local<Array> array = Local<Array>::Cast(args[2]);
 		for(unsigned int i = 0; i < array->Length(); i++) {
 			Local<Value> val = array->Get(context, i).ToLocalChecked();
 			Nan::Utf8String str(val->ToString(context).FromMaybe(Local<String>()));
-			strings.push_back(std::string(*str));
+			flags.push_back(std::string(*str));
 		}
 	}
 
 	// make the matrix
-	LedMatrix* matrix = new LedMatrix(rows, cols, chained, parallel, brightness, mapping.c_str(), rgbSeq.c_str(), strings);
+	LedMatrix* matrix = new LedMatrix(rows, cols, flags);
 	matrix->Wrap(args.This());
 
 	// return this object
