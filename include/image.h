@@ -13,8 +13,7 @@
 
 class Pixel {
 	public:
-		// Pixel() : red(0), green(0), blue(0) {}
-		Pixel();
+		Pixel(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
 
 		uint8_t R() const;
 		uint8_t G() const;
