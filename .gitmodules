@@ -1,3 +1,4 @@
 [submodule "external/matrix"]
 	path = external/matrix
-	url = https://github.com/hzeller/rpi-rgb-led-matrix.git
+	url = https://github.com/lehni/rpi-rgb-led-matrix
+	branch = 4transitions
