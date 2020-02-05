@@ -28,9 +28,8 @@ using rgb_matrix::GPIO;
 Nan::Persistent<Function> LedMatrix::constructor;
 std::map<std::string, rgb_matrix::Font> LedMatrix::fontMap;
 
-LedMatrix::LedMatrix (int rows, int cols, int parallel_displays, int chained_displays, int brightness, const char* mapping, const char* rgbseq, std::vector<std::string> flags) 
+LedMatrix::LedMatrix (int rows, int cols, int chained_displays, int parallel_displays, int brightness, const char* mapping, const char* rgbseq, std::vector<std::string> flags) 
 {
-
 	//dump out flags into a vector of char* <CRRINNGGEEEEEE>
 	std::vector<char*> c_strs;
 	c_strs.push_back("bin");
@@ -447,7 +446,7 @@ void LedMatrix::New(const Nan::FunctionCallbackInfo<Value>& args)
 	}
 
 	// make the matrix
-	LedMatrix* matrix = new LedMatrix(rows, cols, chained, parallel, brightness,  mapping.c_str(), rgbSeq.c_str(), strings);
+	LedMatrix* matrix = new LedMatrix(rows, cols, chained, parallel, brightness, mapping.c_str(), rgbSeq.c_str(), strings);
 	matrix->Wrap(args.This());
 
 	// return this object
