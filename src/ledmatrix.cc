@@ -150,8 +150,9 @@ void LedMatrix::SetImage (Image* img)
 	image->Reset();
 	image->SetWidth(img->GetWidth());
 	image->SetHeight(img->GetHeight());
-	Pixel* p = (Pixel*)malloc(sizeof(Pixel)*image->GetWidth()*image->GetHeight());
-	memcpy(p, img->GetPixels(), sizeof(Pixel)*image->GetWidth()*image->GetHeight());
+	int amount = image->GetWidth() * image->GetHeight();
+	Pixel* p = new Pixel[amount];
+	memcpy(p, img->GetPixels(), sizeof(Pixel) * amount);
 	image->SetPixels(p);
 }
 
@@ -526,30 +527,38 @@ void LedMatrix::SetImageBuffer (const Nan::FunctionCallbackInfo<v8::Value>& args
 
 	LedMatrix* matrix = ObjectWrap::Unwrap<LedMatrix>(args.Holder());
 
-	char* buf = Buffer::Data(args[0]->ToObject());
-	size_t bufl = Buffer::Length(args[0]->ToObject());
-	int width = args[1]->ToInteger()->Value();
-	int height = args[2]->ToInteger()->Value();
+	v8::Local<v8::Context> context = Nan::GetCurrentContext();
+	char* data = Buffer::Data(args[0]->ToObject(context).ToLocalChecked());
+	size_t length = Buffer::Length(args[0]->ToObject(context).ToLocalChecked());
+	int width = Nan::To<int>(args[1]).FromJust();
+	int height = Nan::To<int>(args[2]).FromJust();
+	int amount = width * height;
+	assert(length == (size_t) amount * 3 || length == (size_t) amount * 4);
+	int step = length / amount;
 
-	assert((int)bufl == width*height*3);
-
-	Image* img = new Image();
-	Pixel* pixels = (Pixel*) malloc(sizeof(Pixel)*width*height);
-	for(int i=0; i < width*height; i++) {
-		int j = i*3;
-		Pixel p;
-		p.SetR(buf[j]);
-		p.SetG(buf[j+1]);
-		p.SetB(buf[j+2]);
-		pixels[i] = p;
+	Image img;
+	Pixel* pixels = new Pixel[amount];
+	int j = 0;
+	for(int i = 0; i < amount; i++) {
+		int r = data[j + 0];
+		int g = data[j + 1];
+		int b = data[j + 2];
+		if (step == 4) {
+			// Handle Alpha value.
+			int a = data[j + 3];
+			r = r * a / 255;
+			g = g * a / 255;
+			b = b * a / 255;
+		}
+		pixels[i] = Pixel(r, g, b);
+		j += step;
 	}
 
-	img->Reset();
-	img->SetPixels(pixels);
-	img->SetWidth(width);
-	img->SetHeight(height);
+	img.SetPixels(pixels);
+	img.SetWidth(width);
+	img.SetHeight(height);
 
-	matrix->SetImage(img);
+	matrix->SetImage(&img);
 }
 
 void LedMatrix::Draw (const Nan::FunctionCallbackInfo<v8::Value>& args) 
