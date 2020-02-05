@@ -170,14 +170,18 @@ void LedMatrix::Draw (int screenx, int screeny, int width, int height, int imgx,
 	}
 }	
 
-void LedMatrix :: Update (void)
+void LedMatrix :: Update (bool preserve)
 {
 	const char* data; 
 	size_t len; 
 
-	canvas->Serialize(&data, &len); 
+	if (preserve) {
+		canvas->Serialize(&data, &len); 
+	}
 	canvas = matrix->SwapOnVSync(canvas);
-	canvas->Deserialize(data, len);
+	if (preserve) {
+		canvas->Deserialize(data, len);
+	}
 }
 
 void LedMatrix :: DrawText (int x, int y, std::tuple<int, int, int> color, const char* text, const char* fontFile) 
@@ -600,10 +604,10 @@ void LedMatrix::Scroll (const Nan::FunctionCallbackInfo<v8::Value>& args)
 
 void LedMatrix::Update (const Nan::FunctionCallbackInfo<v8::Value>& args) 
 {
+	bool preserve = true;
+	if(args.Length() > 0 && args[0]->IsBoolean()) preserve = Nan::To<bool>(args[0]).FromJust();
 	LedMatrix* matrix = ObjectWrap::Unwrap<LedMatrix>(args.Holder());
-
-	matrix->Update();
-
+	matrix->Update(preserve);
 }
 
 void LedMatrix::UV_Scroll (uv_work_t* work) 

@@ -54,7 +54,7 @@ class LedMatrix : public node::ObjectWrap
 	void DrawLine	(int, int, int, int, std::tuple<int, int, int>); 
 	void SetBrightness (int); 
 
-	void Update		(void);
+	void Update		(bool preserve = true);
 
 	protected:
 	LedMatrix (int rows, int cols, std::vector<std::string> flags);
